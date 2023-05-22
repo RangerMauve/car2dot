@@ -1,13 +1,20 @@
 import { Block } from 'multiformats/block'
 import * as json from 'multiformats/codecs/json'
+import * as raw from 'multiformats/codecs/raw'
 import * as cbor from '@ipld/dag-cbor'
 import * as pb from '@ipld/dag-pb'
 
 import { CarBlockIterator } from '@ipld/car'
 
 const BAFY_PREFIX = 'bafybei'
-const DEFAULT_DIRECTION = 'TD'
+const DEFAULT_DIRECTION = 'LR'
 const DEFAULT_TITLE = 'CAR File Contents'
+
+const codecs = new Map()
+codecs.set(pb.code, pb)
+codecs.set(raw.code, raw)
+codecs.set(cbor.code, cbor)
+codecs.set(json.code, json)
 
 const DOT_STYLE = `
   labelloc=t
@@ -65,23 +72,14 @@ export async function * blocksToDot (blocks, opts = DEFAULT_OPTS) {
 
     const shortName = cid.toString().slice(BAFY_PREFIX.length, BAFY_PREFIX.length + 8)
 
-    yield `\n  ${cid} [label="${shortName} ${bytes.length} bytes"]\n`
+    yield `\n  ${cid} [label="${shortName} (${bytes.length})"]\n`
 
-    let value = null
-
-    try {
-      value = pb.decode(bytes)
-    } catch {
-      try {
-        value = cbor.decode(bytes)
-      } catch {
-        try {
-          value = json.decode(bytes)
-        } catch (e) {
-          throw new Error(`Unable to parse Block: ${cid}. Unknown codec (only pb/json/cbor is currently supported`)
-        }
-      }
+    if (!codecs.has(cid.code)) {
+      throw new Error(`Unable to parse Block: ${cid}. Unknown codec. Only pb/json/cbor/raw is currently supported`)
     }
+
+    const codec = codecs.get(cid.code)
+    const value = codec.decode(bytes)
 
     const fullBlock = new Block({ cid, bytes, value })
 
