@@ -1,6 +1,6 @@
 {
   "name": "car2dot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Convert IPFS CAR files to GraphViz DOT syntax for viewing graphs.",
   "main": "index.js",
   "type": "module",
