@@ -6,10 +6,11 @@ import * as pb from '@ipld/dag-pb'
 import { CarBlockIterator } from '@ipld/car'
 
 const BAFY_PREFIX = 'bafybei'
+const DEFAULT_DIRECTION = 'TD'
+const DEFAULT_TITLE = 'CAR File Contents'
 
 const DOT_STYLE = `
   labelloc=t
-  rankdir=LR
   bgcolor="#11111"
   fontname="system-ui"
   fontcolor="#F2F2F2"
@@ -30,30 +31,41 @@ const DOT_STYLE = `
 
 const DOT_HEADER = `
 digraph {
-  label="CAR file contents"
-
 `
 
 const DOT_FOOTER = `
 }
 `
 
-export async function * carToDot (bufferIterable, style = DOT_STYLE) {
-  const blocks = await CarBlockIterator.fromIterable(bufferIterable)
-
-  yield * blocksToDot(blocks, style)
+const DEFAULT_OPTS = {
+  style: DOT_STYLE,
+  direction: DEFAULT_DIRECTION,
+  title: DEFAULT_TITLE
 }
 
-export async function * blocksToDot (blocks, style = DOT_STYLE) {
+export async function * carToDot (bufferIterable, opts = DEFAULT_OPTS) {
+  const blocks = await CarBlockIterator.fromIterable(bufferIterable)
+
+  yield * blocksToDot(blocks, opts)
+}
+
+export async function * blocksToDot (blocks, opts = DEFAULT_OPTS) {
+  const {
+    style = DOT_STYLE,
+    direction = DEFAULT_DIRECTION,
+    title = DEFAULT_TITLE
+  } = opts
   yield DOT_HEADER
-  yield DOT_STYLE
+  yield `  label="${title}"\n`
+  yield `  rankdir=${direction}\n`
+  yield style
 
   for await (const block of blocks) {
     const { cid, bytes } = block
 
     const shortName = cid.toString().slice(BAFY_PREFIX.length, BAFY_PREFIX.length + 8)
 
-    yield `\n  ${cid} [label="${shortName} ${bytes.length}"]\n`
+    yield `\n  ${cid} [label="${shortName} ${bytes.length} bytes"]\n`
 
     let value = null
 

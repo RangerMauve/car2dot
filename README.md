@@ -8,6 +8,9 @@ Convert IPFS CAR files to GraphViz DOT syntax for viewing graphs.
 cat example.car | npx --yes car2dot > graph.dot
 # Render it to SVG with graphviz
 cat example.car | npx --yes car2dot | dot -Tsvg > graph.svg
+
+# Render layout as Top Down with a custom title
+cat example.car | npx --yes car2dot --direction TD --title "Example"
 ```
 
 ## API
